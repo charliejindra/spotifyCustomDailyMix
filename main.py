@@ -5,7 +5,13 @@ import spotipy
 import webbrowser
 import spotipy.util as util
 import random
+import smtplib,ssl
 from json.decoder import JSONDecodeError
+import time
+
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
 # give your playlist name, and it will get its id
 # if not found returns none
 
@@ -22,85 +28,194 @@ def getPlaylistId(playlistName):
     else:
         return "DNE"
     
+#function for sending email
+def send_email(subject, msg):
+    sender_email = "michelvsace@gmail.com"
+    receiver_email = "charlessjindra@gmail.com"
 
-playlistName = "Daily Mix Best"
-#get username and scope
-username =  "charlessjindra"
-# sys.argv[1]
-scope = 'user-modify-playback-state user-top-read playlist-modify-public user-read-currently-playing playlist-read-collaborative'
+    passW = open("password.txt", 'r')
+    password = passW.readline()
+    passW.close()
 
-#erase cache and prompt for user permission
-try:
-    token = util.prompt_for_user_token(username, scope)
-except:
-    os.remove(f".cache-{username}")
-    token = util.prompt_for_user_token(username, scope)
+    message = MIMEMultipart("alternative")
+    message["Subject"] = subject
+    message["From"] = sender_email
+    message["To"] = receiver_email
 
-#print('well we got past the stupid junk')
-#set up spotify object
-spotifyObj = spotipy.Spotify(auth=token)
+    # Create the plain-text and HTML version of your message
+    text = """\
+    get a better email"""
+    html = msg
+
+    # Turn these into plain/html MIMEText objects
+    part1 = MIMEText(text, "plain")
+    part2 = MIMEText(html, "html")
+
+    # Add HTML/plain-text parts to MIMEMultipart message
+    # The email client will try to render the last part first
+    message.attach(part1)
+    message.attach(part2)
+
+    # Create secure connection with server and send email
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+        server.login(sender_email, password)
+        server.sendmail(
+            sender_email, receiver_email, message.as_string()
+        )
+    # try:
+    #     server = smtplib.SMTP('smtp.gmail.com:587')
+    #     server.ehlo()
+    #     server.starttls()
+
+    #     passW = open("password.txt", 'r')
+    #     #print("opened password file")
+    #     password = passW.readline()
+    #     #print("read password")
+    #     passW.close()
+    #     #print("closed password file")
+
+    #     server.login("michelvsace@gmail.com", password)
+
+    #     #print("got thru the email opening")
+
+    #     try:
+    #         #print('message abttta be stored')
+    #         message = 'Subject: {}\n\n{}'.format(subject, msg)
+    #         #print('message stored man')
+    #         server.sendmail("michelvsace@gmail.com", "charlessjindra@gmail.com", message)
+    #     except:
+    #         print('didnt work :(')
+    #         message = 'Subject: {}\n\n{}'.format(subject, "Copying tweet failed.")
+    #         server.sendmail("michelvsace@gmail.com", "charlessjindra@gmail.com", message)
+    #     server.quit()
+    #     print("Success: Email sent!")
+    # except:
+    #     print("Email failed to send.")
+
+while True:
+
+    playlistName = "Daily Mix Best"
+    #get username and scope
+    username =  "charlessjindra"
+    # sys.argv[1]
+    scope = 'user-modify-playback-state user-top-read playlist-modify-public user-read-currently-playing playlist-read-collaborative'
+
+    #erase cache and prompt for user permission
+    try:
+        token = util.prompt_for_user_token(username, scope)
+    except:
+        os.remove(f".cache-{username}")
+        token = util.prompt_for_user_token(username, scope)
+
+    #print('well we got past the stupid junk')
+    #set up spotify object
+    spotifyObj = spotipy.Spotify(auth=token)
 
 
 
-# remove old songs from daily mix better
-oldPlaylist = getPlaylistId(playlistName)
-print(oldPlaylist)
+    # remove old songs from daily mix better
+    oldPlaylist = getPlaylistId(playlistName)
+    print(oldPlaylist)
 
-if oldPlaylist == "DNE":
-    spotifyObj.user_playlist_create("charlessjindra", playlistName, public=True)
-    
-else:
-    oldTracks = spotifyObj.user_playlist_tracks(username, playlist_id=oldPlaylist)["items"]
-    #print(json.dumps(oldTracks, indent=4))
-    oldTrackIds = []
-
-    for track in oldTracks:
+    if oldPlaylist == "DNE":
+        spotifyObj.user_playlist_create("charlessjindra", playlistName, public=True)
         
-        #print(json.dumps(track, indent=4))
-        oldTrackIds.append(track["track"]["id"])
+    else:
+        oldTracks = spotifyObj.user_playlist_tracks(username, playlist_id=oldPlaylist)["items"]
+        #print(json.dumps(oldTracks, indent=4))
+        oldTrackIds = []
 
-    spotifyObj.user_playlist_remove_all_occurrences_of_tracks(username, oldPlaylist, oldTrackIds) 
+        for track in oldTracks:
+            
+            #print(json.dumps(track, indent=4))
+            oldTrackIds.append(track["track"]["id"])
+
+        spotifyObj.user_playlist_remove_all_occurrences_of_tracks(username, oldPlaylist, oldTrackIds) 
 
 
-playlistid = getPlaylistId(playlistName)
+    playlistid = getPlaylistId(playlistName)
 
 
-# #rint(playlistid)
+    # #rint(playlistid)
 
 
-## GET SONGS FROM TOP SONGS OF USER
-songsLeftToAdd = 5
-trackList = []
-familiarSongs = []
-songsJson = spotifyObj.current_user_top_tracks(time_range='medium_term', limit=40)["items"]
-i = 0
+    ## GET SONGS FROM TOP SONGS OF USER
+    songsLeftToAdd = 5
+    trackList = []
+    familiarSongs = []
+    songsJson = spotifyObj.current_user_top_tracks(time_range='medium_term', limit=40)["items"]
+    i = 0
 
-print(len(songsJson))
+    print(len(songsJson))
 
-for song in songsJson:
-    familiarSongs.append(song["id"])
+    for song in songsJson:
+        familiarSongs.append(song["id"])
 
-while songsLeftToAdd != 0:
-    trackList.append(familiarSongs[random.randint(0,40)])
-    songsLeftToAdd -= 1
+    while songsLeftToAdd != 0:
+        trackList.append(familiarSongs[random.randint(0,len(familiarSongs)-1)])
+        songsLeftToAdd -= 1
 
-## GET SONGS FROM TOP ARTISTS OF USER (top 10 tracks in each artists catalog)
-songsLeftToAdd = 30
+    ## GET SONGS FROM TOP ARTISTS OF USER (top 10 tracks in each artists catalog)
+    songsLeftToAdd = 30
 
-results = spotifyObj.current_user_top_artists(time_range="short_term", limit=50)
+    results = spotifyObj.current_user_top_artists(time_range="short_term", limit=50)
 
-# get artist ids
-artistids = []
-for item in results["items"]:
-    artistids.append(item["id"])
+    # get artist ids
+    artistids = []
+    for item in results["items"]:
+        artistids.append(item["id"])
 
-while (songsLeftToAdd != 0):
-    
-    artist = artistids[random.randint(0,45)]
-    songsToChooseFrom = spotifyObj.artist_top_tracks(artist)
-    track = songsToChooseFrom["tracks"][random.randint(0,9)]["id"]
-    trackList.append(track)
-    #print(json.dumps(songsToChooseFrom["tracks"][0], indent=4))
-    songsLeftToAdd -= 1
+    while songsLeftToAdd != 0:
+        artist = artistids[random.randint(0,45)]
+        songsToChooseFrom = spotifyObj.artist_top_tracks(artist)
+        track = songsToChooseFrom["tracks"][random.randint(0,9)]["id"]
+        trackList.append(track)
+        #print(json.dumps(songsToChooseFrom["tracks"][0], indent=4))
+        songsLeftToAdd -= 1
 
-spotifyObj.user_playlist_add_tracks("charlessjindra", playlistid, trackList)
+        relatedArtists = spotifyObj.artist_related_artists(artist)["artists"]
+        #print(json.dumps(relatedArtists, indent=4))
+        relatedArtistIds = []
+        for artist in relatedArtists:
+            relatedArtistIds.append(artist["id"])
+        counter = 2
+
+        while counter != 0:
+            print(len(relatedArtistIds))
+            artistUsing = relatedArtistIds[random.randint(0, len(relatedArtistIds)-1)]
+            songsToChooseFrom = spotifyObj.artist_top_tracks(artistUsing)
+            track = songsToChooseFrom["tracks"][random.randint(0,len(songsToChooseFrom["tracks"])-1)]["id"]
+            trackList.append(track)
+            songsLeftToAdd -= 1
+            counter -= 1
+
+    spotifyObj.user_playlist_add_tracks("charlessjindra", playlistid, trackList)
+
+    print("now we wait")
+
+    playlistSongs = spotifyObj.user_playlist_tracks(username, playlistid)
+
+    # msgBuilder = """\
+    # <html>
+    # <body>
+    #     <h2>Today's Daily Mix</h2>
+    #     <b>Here's some songs you already love:</b>
+    #     {}
+    #     <b>Here's some artists you listen to, followed up with songs fellow listeners liked:</b>
+    #     {}
+    # </body>
+    # </html>
+    # """.format(songsYouLike, songsWithInfluences)
+
+    msgBuilder = """\
+        <html>
+        <body>
+        <h1>yeah you have it</h1>
+        </body>
+        </html>
+        """
+
+    send_email("Your Custom Daily Mix is Here", msgBuilder)
+
+    time.sleep(86400)
