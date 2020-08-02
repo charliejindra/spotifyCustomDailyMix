@@ -93,8 +93,8 @@ def send_email(subject, msg):
     # except:
     #     print("Email failed to send.")
 
-def containsThisTrack(trackId):
-    for track in trackList:
+def containsThisTrack(trackId, tList):
+    for track in tList:
         if track == trackId:
             return True
     return False
@@ -132,7 +132,6 @@ while True:
         oldTrackIds = []
 
         for track in oldTracks:
-            
             #print(json.dumps(track, indent=4))
             oldTrackIds.append(track["track"]["id"])
 
@@ -159,7 +158,7 @@ while True:
 
     while songsLeftToAdd != 0:
         potentialSong = familiarSongs[random.randint(0,len(familiarSongs)-1)]
-        if not containsThisTrack(potentialSong):
+        if not containsThisTrack(potentialSong, trackList):
             trackList.append(familiarSongs[random.randint(0,len(familiarSongs)-1)])
             songsLeftToAdd -= 1
 
@@ -177,7 +176,7 @@ while True:
         artist = artistids[random.randint(0,45)]
         songsToChooseFrom = spotifyObj.artist_top_tracks(artist)
         track = songsToChooseFrom["tracks"][random.randint(0,9)]["id"]
-        while containsThisTrack(track):
+        while containsThisTrack(track, trackList):
             track = songsToChooseFrom["tracks"][random.randint(0,9)]["id"]
         trackList.append(track)
         #print(json.dumps(songsToChooseFrom["tracks"][0], indent=4))
@@ -195,7 +194,7 @@ while True:
             artistUsing = relatedArtistIds[random.randint(0, len(relatedArtistIds)-1)]
             songsToChooseFrom = spotifyObj.artist_top_tracks(artistUsing)
             track = songsToChooseFrom["tracks"][random.randint(0,len(songsToChooseFrom["tracks"])-1)]["id"]
-            while containsThisTrack(track):
+            while containsThisTrack(track, trackList):
                 track = songsToChooseFrom["tracks"][random.randint(0,len(songsToChooseFrom["tracks"])-1)]["id"]
             trackList.append(track)
             songsLeftToAdd -= 1
@@ -205,27 +204,44 @@ while True:
 
     print("now we wait")
 
-    playlistSongs = spotifyObj.user_playlist_tracks(username, playlistid)
+    playlistSongs = spotifyObj.user_playlist_tracks(username, playlistid, limit=100)
 
-    # msgBuilder = """\
-    # <html>
-    # <body>
-    #     <h2>Today's Daily Mix</h2>
-    #     <b>Here's some songs you already love:</b>
-    #     {}
-    #     <b>Here's some artists you listen to, followed up with songs fellow listeners liked:</b>
-    #     {}
-    # </body>
-    # </html>
-    # """.format(songsYouLike, songsWithInfluences)
+    songListBuilder = playlistSongs["items"][0:5]
+    songsPrettified = []
+    #print(json.dumps(songListBuilder, indent=4))
+    for song in songListBuilder:
+        songsPrettified.append(song["track"]["name"] + " - " + song["track"]["artists"][0]["name"])
+
+    songsYouLike = "<ul>"
+    for song in songsPrettified:
+        songsYouLike += "<li>" + song + "</li>"
+    songsYouLike += "</ul>"
+
+    songListBuilder = playlistSongs["items"][5:len(playlistSongs["items"])]
+    songsPrettified = []
+    print (len(songListBuilder))
+    for song in songListBuilder:
+        #if the song number is divisible by three (an artist you know)
+        if songListBuilder.index(song) % 3 == 0:
+            songsPrettified.append(song["track"]["artists"][0]["name"])
+
+    songsWithInfluences = "<ul>"
+    for art in songsPrettified:
+        songsWithInfluences += "<li>" + art + "</li>"
+    songsWithInfluences += "</ul>"
+    
 
     msgBuilder = """\
-        <html>
-        <body>
-        <h1>yeah you have it</h1>
-        </body>
-        </html>
-        """
+    <html>
+    <body>
+        <h2>Today's Daily Mix</h2>
+        <b>Here's some songs you already love:</b>
+        {}
+        <b>Here's some artists you listen to, followed up with songs fellow listeners liked:</b>
+        {}
+    </body>
+    </html>
+    """.format(songsYouLike, songsWithInfluences)
 
     send_email("Your Custom Daily Mix is Here", msgBuilder)
 
