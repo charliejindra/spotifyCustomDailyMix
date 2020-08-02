@@ -93,8 +93,15 @@ def send_email(subject, msg):
     # except:
     #     print("Email failed to send.")
 
+def containsThisTrack(trackId):
+    for track in trackList:
+        if track == trackId:
+            return True
+    return False
+
 while True:
 
+    
     playlistName = "Daily Mix Best"
     #get username and scope
     username =  "charlessjindra"
@@ -111,8 +118,6 @@ while True:
     #print('well we got past the stupid junk')
     #set up spotify object
     spotifyObj = spotipy.Spotify(auth=token)
-
-
 
     # remove old songs from daily mix better
     oldPlaylist = getPlaylistId(playlistName)
@@ -153,8 +158,10 @@ while True:
         familiarSongs.append(song["id"])
 
     while songsLeftToAdd != 0:
-        trackList.append(familiarSongs[random.randint(0,len(familiarSongs)-1)])
-        songsLeftToAdd -= 1
+        potentialSong = familiarSongs[random.randint(0,len(familiarSongs)-1)]
+        if not containsThisTrack(potentialSong):
+            trackList.append(familiarSongs[random.randint(0,len(familiarSongs)-1)])
+            songsLeftToAdd -= 1
 
     ## GET SONGS FROM TOP ARTISTS OF USER (top 10 tracks in each artists catalog)
     songsLeftToAdd = 30
@@ -170,6 +177,8 @@ while True:
         artist = artistids[random.randint(0,45)]
         songsToChooseFrom = spotifyObj.artist_top_tracks(artist)
         track = songsToChooseFrom["tracks"][random.randint(0,9)]["id"]
+        while containsThisTrack(track):
+            track = songsToChooseFrom["tracks"][random.randint(0,9)]["id"]
         trackList.append(track)
         #print(json.dumps(songsToChooseFrom["tracks"][0], indent=4))
         songsLeftToAdd -= 1
@@ -186,6 +195,8 @@ while True:
             artistUsing = relatedArtistIds[random.randint(0, len(relatedArtistIds)-1)]
             songsToChooseFrom = spotifyObj.artist_top_tracks(artistUsing)
             track = songsToChooseFrom["tracks"][random.randint(0,len(songsToChooseFrom["tracks"])-1)]["id"]
+            while containsThisTrack(track):
+                track = songsToChooseFrom["tracks"][random.randint(0,len(songsToChooseFrom["tracks"])-1)]["id"]
             trackList.append(track)
             songsLeftToAdd -= 1
             counter -= 1
