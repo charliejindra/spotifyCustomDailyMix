@@ -238,6 +238,7 @@ while True:
         songsWithInfluences += "<li>" + art + "</li>"
     songsWithInfluences += "</ul>"
     
+    playlistUrl = "https://open.spotify.com/playlist/{}".format(playlistid)
 
     msgBuilder = """\
     <html>
@@ -247,9 +248,10 @@ while True:
         {}
         <b>Here's some artists you listen to, followed up with songs fellow listeners liked:</b>
         {}
+        <i>Here's a link to your playlist - </i>{}
     </body>
     </html>
-    """.format(songsYouLike, songsWithInfluences)
+    """.format(songsYouLike, songsWithInfluences, playlistUrl)
 
     send_email("Your Custom Daily Mix is Here", msgBuilder, email)
 
