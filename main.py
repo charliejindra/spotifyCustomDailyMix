@@ -29,9 +29,9 @@ def getPlaylistId(playlistName):
         return "DNE"
     
 #function for sending email
-def send_email(subject, msg):
+def send_email(subject, msg, rcvemail):
     sender_email = "michelvsace@gmail.com"
-    receiver_email = "charlessjindra@gmail.com"
+    receiver_email = rcvemail
 
     passW = open("password.txt", 'r')
     password = passW.readline()
@@ -118,12 +118,21 @@ while True:
     #set up spotify object
     spotifyObj = spotipy.Spotify(auth=token)
 
+    #get email to use for email feature
+    try:
+        emailFile = open("email/{}".format(username), "r")
+        email = emailFile.read()
+    except:
+        emailFile = open("email/{}".format(username), "w+")
+        email = input("Please enter an email you would like to be notified on when your daily mix is ready:")
+        emailFile.write(email)
+
     # remove old songs from daily mix better
     oldPlaylist = getPlaylistId(playlistName)
     print(oldPlaylist)
 
     if oldPlaylist == "DNE":
-        spotifyObj.user_playlist_create("charlessjindra", playlistName, public=True)
+        spotifyObj.user_playlist_create(username, playlistName, public=True)
         
     else:
         oldTracks = spotifyObj.user_playlist_tracks(username, playlist_id=oldPlaylist)["items"]
@@ -199,7 +208,7 @@ while True:
             songsLeftToAdd -= 1
             counter -= 1
 
-    spotifyObj.user_playlist_add_tracks("charlessjindra", playlistid, trackList)
+    spotifyObj.user_playlist_add_tracks(username, playlistid, trackList)
 
     print("now we wait")
 
@@ -242,6 +251,6 @@ while True:
     </html>
     """.format(songsYouLike, songsWithInfluences)
 
-    send_email("Your Custom Daily Mix is Here", msgBuilder)
+    send_email("Your Custom Daily Mix is Here", msgBuilder, email)
 
     time.sleep(86400)
