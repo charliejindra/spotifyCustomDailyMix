@@ -63,35 +63,6 @@ def send_email(subject, msg, rcvemail):
         server.sendmail(
             sender_email, receiver_email, message.as_string()
         )
-    # try:
-    #     server = smtplib.SMTP('smtp.gmail.com:587')
-    #     server.ehlo()
-    #     server.starttls()
-
-    #     passW = open("password.txt", 'r')
-    #     #print("opened password file")
-    #     password = passW.readline()
-    #     #print("read password")
-    #     passW.close()
-    #     #print("closed password file")
-
-    #     server.login("michelvsace@gmail.com", password)
-
-    #     #print("got thru the email opening")
-
-    #     try:
-    #         #print('message abttta be stored')
-    #         message = 'Subject: {}\n\n{}'.format(subject, msg)
-    #         #print('message stored man')
-    #         server.sendmail("michelvsace@gmail.com", "charlessjindra@gmail.com", message)
-    #     except:
-    #         print('didnt work :(')
-    #         message = 'Subject: {}\n\n{}'.format(subject, "Copying tweet failed.")
-    #         server.sendmail("michelvsace@gmail.com", "charlessjindra@gmail.com", message)
-    #     server.quit()
-    #     print("Success: Email sent!")
-    # except:
-    #     print("Email failed to send.")
 
 def containsThisTrack(trackId, tList):
     for track in tList:
@@ -255,4 +226,5 @@ while True:
 
     send_email("Your Custom Daily Mix is Here", msgBuilder, email)
 
+    # 24 hours boyo
     time.sleep(86400)
