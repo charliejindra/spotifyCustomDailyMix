@@ -100,11 +100,10 @@ def containsThisTrack(trackId, tList):
     return False
 
 while True:
-
     
     playlistName = "Daily Mix Best"
     #get username and scope
-    username =  "charlessjindra"
+    username =  sys.argv[1]
     # sys.argv[1]
     scope = 'user-modify-playback-state user-top-read playlist-modify-public user-read-currently-playing playlist-read-collaborative'
 
