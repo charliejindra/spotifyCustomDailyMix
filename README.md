@@ -17,3 +17,15 @@ with a password.txt file of your own to login to your own email ( you know what 
 to use this feature then contact me at charlessjindra@gmail.com and i'll help you )
 
 hope you enjoy! in the future i will hopefully make this more featured and dev friendly.
+
+# - backlog -
+
+- flask app
+- improved song selection
+    - record songs and how many times theyve been selected in the past
+    - select songs that have been selected in the past less
+    - pick songs from three lists potentially: "this is" playlist, then top songs, then all artist's songs
+- improved artist curation
+    - track related artist selection history
+    - recognize when related artist enters top artist list and do ?? with it
+    
