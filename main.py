@@ -15,7 +15,7 @@ from email.mime.multipart import MIMEMultipart
 # give your playlist name, and it will get its id
 # if not found returns none
 
-def getPlaylistId(playlistName):
+def getUserPlaylistId(playlistName):
     playlists = spotifyObj.user_playlists(username, limit=50)["items"]
     playlistFound = False
     for playlist in playlists:
@@ -99,7 +99,7 @@ while True:
         emailFile.write(email)
 
     # remove old songs from daily mix better
-    oldPlaylist = getPlaylistId(playlistName)
+    oldPlaylist = getUserPlaylistId(playlistName)
     print(oldPlaylist)
 
     if oldPlaylist == "DNE":
@@ -117,7 +117,7 @@ while True:
         spotifyObj.user_playlist_remove_all_occurrences_of_tracks(username, oldPlaylist, oldTrackIds) 
 
 
-    playlistid = getPlaylistId(playlistName)
+    playlistid = getUserPlaylistId(playlistName)
 
 
     # #rint(playlistid)
