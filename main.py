@@ -14,7 +14,6 @@ from email.mime.multipart import MIMEMultipart
 
 # give your playlist name, and it will get its id
 # if not found returns none
-
 def getUserPlaylistId(playlistName):
     playlists = spotifyObj.user_playlists(username, limit=50)["items"]
     playlistFound = False
@@ -27,7 +26,32 @@ def getUserPlaylistId(playlistName):
         return playlistid
     else:
         return "DNE"
+
+# get playlist from pool of all playlists
+# right now specifically for getting a "this is" playlist
+def getFromAllPlaylists(playlistName):
+    playlist = spotifyObj.search(q=playlistName, type='playlist', limit=1)
+    #print("results for {}".format(playlistName))
+    #print(json.dumps(playlist, indent=4))
+    playlistFound = False
     
+    #change playlist name to look normal
+    playlistName = playlistName.replace('+', ' ')
+    playlistName = playlistName.replace('"', '')
+
+    if(len(playlist["playlists"]["items"]) > 0):
+        if(playlist["playlists"]["items"][0]["name"] == playlistName):
+                playlistFound = True
+                playlistid = playlist["playlists"]["items"][0]["id"]
+        if(playlistFound):
+            return playlistid
+        else:
+            return "DNE"
+    else:
+        return "DNE"
+    
+def getArtistFromId():
+    return True
 #function for sending email
 def send_email(subject, msg, rcvemail):
     sender_email = "michelvsace@gmail.com"
@@ -72,6 +96,7 @@ def containsThisTrack(trackId, tList):
 
 while True:
     
+    
     playlistName = "Daily Mix Best"
     #get username and scope
     username =  sys.argv[1]
@@ -100,7 +125,7 @@ while True:
 
     # remove old songs from daily mix better
     oldPlaylist = getUserPlaylistId(playlistName)
-    print(oldPlaylist)
+    #print(oldPlaylist)
 
     if oldPlaylist == "DNE":
         spotifyObj.user_playlist_create(username, playlistName, public=True)
@@ -169,15 +194,49 @@ while True:
         counter = 2
 
         while counter != 0:
-            print(len(relatedArtistIds))
-            artistUsing = relatedArtistIds[random.randint(0, len(relatedArtistIds)-1)]
-            songsToChooseFrom = spotifyObj.artist_top_tracks(artistUsing)
-            track = songsToChooseFrom["tracks"][random.randint(0,len(songsToChooseFrom["tracks"])-1)]["id"]
-            while containsThisTrack(track, trackList):
+            #print(len(relatedArtistIds))
+            artistIdUsing = relatedArtistIds[random.randint(0, len(relatedArtistIds)-1)]
+
+            # Try to get the This Is playlist from the artist.
+
+            artistUsingDict = spotifyObj.artist(artistIdUsing)
+            
+            artistUsing = artistUsingDict["name"]
+            artistUsing = json.dumps(artistUsing).replace(' ', '+')
+
+            thisIsPlaylist = getFromAllPlaylists("This+Is+" + artistUsing)
+
+            #print(json.dumps(thisIsPlaylist, indent=4))
+            getFromThisIs = True if (thisIsPlaylist == "This is " + artistUsing) else False
+            #print(getFromThisIs)
+
+            if(getFromThisIs):
+                # this is playlist path
+                songsToChooseFrom = spotifyObj.playlist(thisIsPlaylist, fields="tracks")["tracks"]
+                #print(json.dumps(songsToChooseFrom, indent=4))
+                #print("there they are")
+
+                
+                #print(json.dumps(songsToChooseFrom, indent=4))
+                
+                #print("length of songs to choose from: " + str(len(songsToChooseFrom)))
+                track = songsToChooseFrom["items"][random.randint(0,len(songsToChooseFrom)-1)]["track"]["id"]
+                #print(json.dumps(track, indent=4))
+                
+                while containsThisTrack(track, trackList):
+                    track = songsToChooseFrom["items"][random.randint(0,len(songsToChooseFrom)-1)]["track"]["id"]
+                trackList.append(track)
+                songsLeftToAdd -= 1
+                counter -= 1
+            else:
+                # top tracks path
+                songsToChooseFrom = spotifyObj.artist_top_tracks(artistIdUsing)
                 track = songsToChooseFrom["tracks"][random.randint(0,len(songsToChooseFrom["tracks"])-1)]["id"]
-            trackList.append(track)
-            songsLeftToAdd -= 1
-            counter -= 1
+                while containsThisTrack(track, trackList):
+                    track = songsToChooseFrom["tracks"][random.randint(0,len(songsToChooseFrom["tracks"])-1)]["id"]
+                trackList.append(track)
+                songsLeftToAdd -= 1
+                counter -= 1
 
     spotifyObj.user_playlist_add_tracks(username, playlistid, trackList)
 
